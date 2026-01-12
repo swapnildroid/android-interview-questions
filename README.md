@@ -55,16 +55,141 @@ Guided, motivated, and inspired them to aim higher and achieve more.
     - **Answer**: [Android Push Notification Flow using FCM](https://www.youtube.com/watch?v=TrufwW4ILHg)
 - **Question**: What is an inline function in Kotlin?
     - **Answer**: [What is an inline function in Kotlin?](https://www.youtube.com/watch?v=GLLI8h67ryo)
+```Kotlin
+/* An inline function in Kotlin is a function whose body is copied (inlined) directly into the call site by the compiler, instead of being called like a normal function.
+
+This is mainly done to remove the overhead of function calls and lambda objects, which matters a lot in high-performance Android code.
+*/
+// How inline works
+inline fun printTwice(action: () -> Unit) {
+    action()
+    action()
+}
+// When you call:
+printTwice { println("Hello") }
+// The compiler rewrites it as:
+println("Hello")
+println("Hello")
+``` 
+
 - **Question**: What is the advantage of using const in Kotlin?
     - **Answer**: [What is the advantage of using const in Kotlin?](https://www.youtube.com/watch?v=3G49ivVxfkU)
+    - const val is baked into bytecode
+    - const avoids object loading (important on Android)
+    - const is required for annotations
+    - const enables smarter optimizations
+    - const is safer than val
+    - Where you should use const (as an Android dev)
+    - API endpoints, JSON keys, Intent extras, Bundle keys, Request codes, Feature flags, Regex patterns, SQL column names, Bluetooth UUID strings.
+    - **One important warning**
+        - If you change a const in a library, and another module uses it, it won’t update unless that module is recompiled. Because the value is copied into the bytecode. This is why Android discourages const for public API versioning.
+        - Mental model
+            - val = variable stored in memory
+            - const val = hard-coded into the program
+
 - **Question**: What is a reified keyword in Kotlin?
     - **Answer**: [What is a reified keyword in Kotlin?](https://www.youtube.com/watch?v=kD2T84FnTck)
+    - “Let me use the real type T at runtime.”
+    - The JVM problem: Type Erasure
+        - At runtime, the JVM does not know what T is.
+        - List<Int> and List<String> both become just List.
+    - Reified lets Kotlin smuggle the real type into bytecode — using inline.
+    - Why reified requires inline:
+        - Without inline, there is nowhere to store T.
+        - With inline, the compiler pastes the code at the call site and injects the type.
+    - Real Android use cases
+        - 1️⃣ ViewModel creation
+        - 2️⃣ Gson / Moshi / Ktor JSON
+        - 3️⃣ Navigation / Intent extras
+        - 4️⃣ Ktor / Retrofit
+    - Mental model
+        - “Turn generic type into a real class at runtime.” But it only works because inline pastes the code.
+ 
+
 - **Question**: Suspending vs Blocking in Kotlin Coroutines
     - **Answer**: [Suspending vs Blocking in Kotlin Coroutines](https://www.youtube.com/watch?v=V2lL_aJp17I)
+    - Blocking stops a thread. The OS thread is occupied and cannot do anything else.
+        - Thread.sleep(1000) or runBlocking {delay(1000) }
+            - The thread is stuck.
+            - UI freezes on Main.
+            - worker pool shrinks on IO/Default
+            - Nothing else can run on that thread.
+    - Suspending pauses a coroutine without stopping a thread. The coroutine pauses, but the thread is released.
+        - delay(1000)
+            - Coroutine is parked
+            - Thread goes back to the pool
+            - other coroutines run
+            - after 1s, it resumes on a free thread, no thread is wasted.
+    - Visual model
+        - Blocking
+            - Thread ────────────────(sleep)───────────────> busy
+        - Suspending
+            - Thread   ──┐
+                         ├── runs other coroutines
+        Coroutine ── paused ── resumed later
+    - Why Kotlin coroutines exist
+        - Very expensive threads.
+        - Very cheap coroutines.
+        - Coruotines scale to millions.
+        - Threads crash at a few thousand.
+    - The golden rule
+        - Never block inside a coroutine.
+        - Always suspend instead.
+    - Suspending lets Kotlin, run millions of tasks, keep UI fluid, use fewer threads, avoid ANRs, beat Java async models.
+    - It is the foundation of Compose, Retrofit, Ktor, Flow, WorkManager
+    - One line summary
+        - Blocking stops the world.
+        - Suspending lets the world continue.
+
 - **Question**: Launch vs Async in Kotlin Coroutines
     - **Answer**: [Launch vs Async in Kotlin Coroutines](https://www.youtube.com/watch?v=B4AfTPpCU5o)
+    - launch: You want to **do something**, not get something.
+    - aysnc: You want to compute a value concurrently.
+    - mental model
+        - launch = just do it
+        - async = calculate it
+    - One line rule: If you don't call await(), you should not be using async.
+ 
+| launch                  | async                                   |
+| ----------------------- | --------------------------------------- |
+| Fire-and-forget         | Returns a result                        |
+| Returns `Job`           | Returns `Deferred<T>`                   |
+| Used for side effects   | Used for calculations                   |
+| Exceptions crash parent | Exceptions are deferred until `await()` |
+
+| Situation              | Use    |
+| ---------------------- | ------ |
+| Button click handler   | launch |
+| Load data              | async  |
+| Fire Bluetooth command | launch |
+| Wait for BLE response  | async  |
+| Write logs             | launch |
+| Read DB                | async  |
+
+
 - **Question**: internal visibility modifier in Kotlin
     - **Answer**: [internal visibility modifier in Kotlin](https://www.youtube.com/watch?v=wOHpuf74-cI)
+    - “Visible everywhere inside this module, but invisible outside it.”
+    - Java cannot express “module-wide” visibility.
+    - 1️⃣ Hides implementation details
+    - 2️⃣ Prevents “dependency spaghetti”
+        - People start using internals accidentally
+    - 3️⃣ Enables safe refactoring
+    - 4️⃣ Better than package-private
+    - Java’s package-private is weak: Same package name = access, Different module = still accessible
+    - Kotlin’s internal: Uses real Gradle module boundaries, Prevents hacks
+    - **One dangerous trap**: internal is only respected in Kotlin. If Java code uses your module, it can still see internals.
+    - **Mental model**: internal = “Public inside my project, private to outsiders.”
+ 
+
+| Modifier  | Scope              |
+| --------- | ------------------ |
+| private   | file / class       |
+| protected | class + subclasses |
+| internal  | whole module       |
+| public    | everywhere         |
+ 
+
 - **Question**: open keyword in Kotlin
     - **Answer**: [open keyword in Kotlin](https://www.youtube.com/watch?v=bfpNDWNE6I0)
 - **Question**: lateinit vs lazy in Kotlin
