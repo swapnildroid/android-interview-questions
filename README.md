@@ -192,8 +192,52 @@ println("Hello")
 
 - **Question**: open keyword in Kotlin
     - **Answer**: [open keyword in Kotlin](https://www.youtube.com/watch?v=bfpNDWNE6I0)
+    - In Kotlin, classes and methods are final by default, i.e. you cannot extended unless explicitly allowed.
+    - The open keyword is used to make a class or function or properties, inheritable/overridable.
+    - **Notes**
+        - Data class cannot be opened.
+        - Inline cannot be overridden.
+        - const cannot be open
+        - 
+| `open`                       | `abstract`             |
+| ---------------------------- | ---------------------- |
+| Has implementation           | Has no implementation  |
+| Can be overridden (optional) | Must be overridden     |
+| Can be instantiated          | Cannot be instantiated |
+
 - **Question**: lateinit vs lazy in Kotlin
     - **Answer**: [lateinit vs lazy in Kotlin](https://www.youtube.com/watch?v=IU2ZktdM-fo)
+    - lateinit cannot be primitive
+    - lateinit defers assignment, lazy defers computation.
+    - lateinit can uninitialized exception error if used before assignment.
+    - why Compose prefers lazy but Hilt prefers lateinit:
+    - Compose wants stable values, Hilt needs mutable slots to fill.
+| Layer        | Ownership      | Correct tool   |
+| ------------ | -------------- | -------------- |
+| UI (Compose) | Pulls data     | `val` + `lazy` |
+| ViewModel    | Pulls state    | `val`          |
+| DI (Hilt)    | Pushes objects | `lateinit var` |
+| Frameworks   | Mutate fields  | `lateinit`     |
+ 
+
+|                   | `lateinit`               | `lazy`          |
+| ----------------- | ------------------------ | --------------- |
+| Who creates value | You                      | Kotlin          |
+| When created      | When you assign          | On first access |
+| Mutable           | Yes (`var`)              | No (`val`)      |
+| Null safety       | Runtime crash if not set | Always safe     |
+| Thread safety     | ❌                        | ✅ by default    |
+| Reassignable      | Yes                      | No              |
+| Memory leaks      | Possible                 | Very safe       |
+
+| If the value is…              | Use            |
+| ----------------------------- | -------------- |
+| Created by you, deterministic | `lazy`         |
+| Provided later by framework   | `lateinit`     |
+| Optional                      | nullable (`?`) |
+| Constant                      | `val`          |
+| Depends on lifecycle          | `lateinit`     |
+
 - **Question**: What is Multidex in Android?
     - **Answer**: [What is Multidex in Android?](https://www.youtube.com/watch?v=R0zd8lmHnmE)
 - **Question**: How does the Android Push Notification system work?
